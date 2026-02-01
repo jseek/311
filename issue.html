@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Details</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="issue-page">
+  <header class="page-header">
+    <h1>Issue Details</h1>
+    <a class="back-link" href="index.html">Back to map</a>
+  </header>
+
+  <section class="issue-panel">
+    <p id="issue-status">Loading issue...</p>
+    <div class="issue-columns">
+      <div id="issue-detail" class="issue-detail" hidden></div>
+      <div class="comments-panel">
+        <h2>Comments</h2>
+        <p id="comments-status">Loading comments...</p>
+        <ul id="comments-list" class="comments-list" hidden></ul>
+      </div>
+    </div>
+    <div class="nearby-panel">
+      <div class="nearby-header">
+        <div>
+          <h2>Nearby issues (within 400 feet)</h2>
+          <p id="nearby-status">Loading nearby issues...</p>
+        </div>
+        <label class="nearby-sort">
+          Sort by
+          <select id="nearby-sort">
+            <option value="created">Created date</option>
+            <option value="distance" selected>Distance</option>
+          </select>
+        </label>
+      </div>
+      <div class="nearby-filter">
+        <label>Created between</label>
+        <div class="nearby-date-fields">
+          <input id="nearby-created-start" type="date">
+          <span class="nearby-date-separator">to</span>
+          <input id="nearby-created-end" type="date">
+        </div>
+        <span id="nearby-created-range">—</span>
+      </div>
+      <div class="nearby-layout">
+        <div class="nearby-list-panel">
+          <ul id="nearby-list" class="nearby-list" hidden></ul>
+          <div id="nearby-pagination" class="nearby-pagination" hidden>
+            <button id="nearby-prev" type="button">Previous</button>
+            <span id="nearby-page">Page 1 of 1</span>
+            <button id="nearby-next" type="button">Next</button>
+          </div>
+        </div>
+        <div class="nearby-map-panel">
+          <div id="nearby-map" aria-label="Map of nearby issues"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+  <script src="issue.js"></script>
+</body>
+</html>
