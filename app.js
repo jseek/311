@@ -4,6 +4,7 @@ const statusFilters = document.querySelectorAll(
 );
 const issueList = document.getElementById("issue-list");
 const bookmarkLink = document.getElementById("bookmark-link");
+const openedAfterInput = document.getElementById("opened-after");
 
 const DEFAULT_LOCATION = {
   lat: 47.2529,
@@ -13,6 +14,7 @@ const DEFAULT_LOCATION = {
 let currentCoords = null;
 let mapInstance = null;
 let currentBBox = null;
+let openedAfterFilter = null;
 
 const STATUS_COLORS = {
   open: "#d64545",
@@ -203,11 +205,22 @@ const updateUrlWithBoundingBox = (bbox) => {
   url.searchParams.set("max_lat", bbox.max_lat);
   url.searchParams.set("max_lng", bbox.max_lng);
   url.searchParams.set("status", getSelectedStatuses());
+  if (openedAfterFilter) {
+    url.searchParams.set("opened_after", openedAfterFilter);
+  } else {
+    url.searchParams.delete("opened_after");
+  }
   window.history.replaceState({}, "", url);
 
   if (bookmarkLink) {
     bookmarkLink.href = url.toString();
   }
+};
+
+const getOpenedAfterDate = (rawValue) => {
+  if (!rawValue) return null;
+  const parsed = new Date(`${rawValue}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
 const getSelectedStatuses = () => {
@@ -231,6 +244,30 @@ const applyStatusFromUrl = () => {
   if (!selected.size) return;
   statusFilters.forEach((input) => {
     input.checked = selected.has(input.value);
+  });
+};
+
+const applyOpenDateFromUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+  const openedAfter = params.get("opened_after");
+  if (!openedAfterInput) return;
+  if (!openedAfter || !getOpenedAfterDate(openedAfter)) {
+    openedAfterInput.value = "";
+    openedAfterFilter = null;
+    return;
+  }
+  openedAfterInput.value = openedAfter;
+  openedAfterFilter = openedAfter;
+};
+
+const filterIssuesByOpenedDate = (issues) => {
+  const openedAfterDate = getOpenedAfterDate(openedAfterFilter);
+  if (!openedAfterDate) return issues;
+  return issues.filter((issue) => {
+    if (!issue.created_at) return false;
+    const createdAt = new Date(issue.created_at);
+    if (Number.isNaN(createdAt.getTime())) return false;
+    return createdAt >= openedAfterDate;
   });
 };
 
@@ -283,7 +320,8 @@ const loadIssuesForLocation = async (coords, bboxOverride) => {
   updateUrlWithBoundingBox(bbox);
 
   try {
-    const issues = await fetchIssues(coords, bbox);
+    const fetchedIssues = await fetchIssues(coords, bbox);
+    const issues = filterIssuesByOpenedDate(fetchedIssues);
     renderIssues(issues);
     addIssueMarkers(mapInstance, issues);
     statusMessage.textContent = `Loaded ${issues.length} nearby issues.`;
@@ -311,6 +349,7 @@ const handleGeolocationError = () => {
 if ("geolocation" in navigator) {
   const bboxFromUrl = getBoundingBoxFromUrl();
   applyStatusFromUrl();
+  applyOpenDateFromUrl();
   if (bboxFromUrl) {
     const centerLat = (bboxFromUrl.min_lat + bboxFromUrl.max_lat) / 2;
     const centerLng = (bboxFromUrl.min_lng + bboxFromUrl.max_lng) / 2;
@@ -329,6 +368,7 @@ if ("geolocation" in navigator) {
   statusMessage.textContent =
     "Geolocation is not supported in this browser. Showing default location.";
   applyStatusFromUrl();
+  applyOpenDateFromUrl();
   loadIssuesForLocation(DEFAULT_LOCATION);
 }
 
@@ -338,5 +378,13 @@ if (statusFilters.length) {
       const coords = currentCoords || DEFAULT_LOCATION;
       loadIssuesForLocation(coords, currentBBox);
     });
+  });
+}
+
+if (openedAfterInput) {
+  openedAfterInput.addEventListener("change", () => {
+    openedAfterFilter = openedAfterInput.value || null;
+    const coords = currentCoords || DEFAULT_LOCATION;
+    loadIssuesForLocation(coords, currentBBox);
   });
 }
